@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { BadgeCheck, Loader2, Mail, Share2, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import html2canvas from "html2canvas-pro";
 import { useAuthStore } from "../store/authStore";
@@ -19,6 +19,7 @@ interface PaymentSuccessProps {
     receiverCardNumber: string;
     receiverCardExpiry: string;
     receiverCardCVV: string;
+    onClose?: () => void;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -37,6 +38,7 @@ export default function PaymentSuccess({
     receiverCardNumber,
     receiverCardExpiry,
     receiverCardCVV,
+    onClose,
 }: PaymentSuccessProps) {
     const cardRef = useRef<HTMLDivElement>(null);
     const [composing, setComposing] = useState(false);
@@ -45,6 +47,13 @@ export default function PaymentSuccess({
     const [status, setStatus] = useState<SubmitStatus>("idle");
     const accessToken = useAuthStore((state) => state.accessToken);
     const user = useAuthStore((state) => state.user);
+
+    useEffect(() => {
+        if (status === "success" && onClose) {
+            const timer = setTimeout(onClose, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [status, onClose]);
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
@@ -282,10 +291,21 @@ export default function PaymentSuccess({
                                     key="success"
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className="flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-green-700 shadow-lg"
+                                    className="flex items-center justify-between gap-3 rounded-full bg-white px-5 py-3 text-sm font-semibold text-green-700 shadow-lg"
                                 >
-                                    <BadgeCheck size={18} className="text-green-500" />
-                                    Receipt sent to {email}
+                                    <div className="flex items-center gap-2">
+                                        <BadgeCheck size={18} className="text-green-500" />
+                                        Receipt sent to {email}
+                                    </div>
+                                    {onClose && (
+                                        <button
+                                            onClick={onClose}
+                                            className="text-green-600 hover:text-green-800"
+                                            aria-label="Close"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    )}
                                 </motion.div>
                             )}
                         </AnimatePresence>

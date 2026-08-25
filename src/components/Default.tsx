@@ -40,7 +40,9 @@ export default function Default() {
                         accessToken ? (
                             <div className="min-h-screen overflow-y-auto bg-[#88afed19] pb-24">
                                 <Header />
-                                <Outlet />
+                                <div className="py-8 px-4">
+                                    <Outlet />
+                                </div>
                                 <Footer />
                             </div>
                         ) : (

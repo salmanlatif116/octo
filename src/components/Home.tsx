@@ -403,7 +403,17 @@ export default function Home({
 
             {
                 paid && (
-                    <PaymentSuccess open={true} amount={outstandingAmount} paidVia={paidVia} dateLabel={formatDate(todayDate.toString())} receiverAccountNumber={receiverAccountNumber} receiverCardNumber={receiverCardNumber} receiverCardExpiry={receiverCardCVV} receiverCardCVV={receiverCardCVV}/>
+                    <PaymentSuccess
+                        open={true}
+                        amount={outstandingAmount}
+                        paidVia={paidVia}
+                        dateLabel={formatDate(todayDate.toString())}
+                        receiverAccountNumber={receiverAccountNumber}
+                        receiverCardNumber={receiverCardNumber}
+                        receiverCardExpiry={receiverCardCVV}
+                        receiverCardCVV={receiverCardCVV}
+                        onClose={() => setPaid(false)}
+                    />
                 )
             }
         </motion.div>
