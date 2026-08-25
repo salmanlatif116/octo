@@ -21,36 +21,25 @@ FROM nginx:alpine
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Create nginx user directory
-RUN mkdir -p /var/www && \
-    chown -R nginx:nginx /var/www
+# Copy nginx configuration - use a simpler approach
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY default.conf /etc/nginx/conf.d/default.conf
+COPY --chown=nginx:nginx default.conf /etc/nginx/conf.d/default.conf
 
 # Copy built application from builder
 COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
 
-# Create a non-root user for better security
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d && \
-    touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid
-
-# Remove default nginx config
-RUN rm -f /etc/nginx/conf.d/default.conf
-
-USER nginx
+# Ensure proper permissions
+RUN chmod -R 755 /usr/share/nginx/html && \
+    chmod -R 755 /var/cache/nginx && \
+    chmod -R 755 /var/log/nginx
 
 # Expose port
 EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/index.html || exit 1
+    CMD curl -f http://localhost:3000/ || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
