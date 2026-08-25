@@ -22,13 +22,6 @@ services:
     labels:
       - "com.example.description=Octo React Application"
       - "com.example.version=${APP_VERSION:-1.0.0}"
-    security_opt:
-      - no-new-privileges:true
-    read_only_root_filesystem: true
-    tmpfs:
-      - /var/run
-      - /var/cache/nginx
-      - /var/log/nginx
 
 networks:
   octo-network:
