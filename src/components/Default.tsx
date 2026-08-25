@@ -38,12 +38,16 @@ export default function Default() {
                 <Route
                     element={
                         accessToken ? (
-                            <div className="min-h-screen overflow-y-auto bg-[#88afed19] pb-24">
-                                <Header />
-                                <div className="py-8 px-4">
+                            <div className="min-h-screen overflow-y-auto bg-[#88afed19]">
+                                <div className="pt-6">
+                                    <Header />
+                                </div>
+                                <div className="px-4 py-8">
                                     <Outlet />
                                 </div>
-                                <Footer />
+                                <div className="pb-6">
+                                    <Footer />
+                                </div>
                             </div>
                         ) : (
                             <Navigate to="/login" />
