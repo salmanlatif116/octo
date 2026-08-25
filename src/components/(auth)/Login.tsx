@@ -25,31 +25,20 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/login/`,
-
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "ngrok-skip-browser-warning": "true",
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password,
-                    }),
-                }
-            );
-
+            const response = await fetch('/user.json');
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error.message || "Login failed")
+            const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+            const allUsers = [...data.users, ...storedUsers];
+
+            const user = allUsers.find((u: any) => u.email === email && u.password === password);
+
+            if (!user) {
+                throw new Error("Invalid email or password");
             }
 
-            const user = {email: data.user.email, name: data.user.full_name, dueDate: data.user.date_joined}
-
-            login(data.access, data.refresh, user);
+            const userData = {email: user.email, name: user.name, dueDate: user.date_joined}
+            login("token_" + user.id, "refresh_" + user.id, userData);
         }
         catch (err) {
             if (err instanceof Error) {

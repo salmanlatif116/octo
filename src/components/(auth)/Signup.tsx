@@ -32,32 +32,30 @@ export default function Signup() {
         setLoading(true);
 
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register/`,
-
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "ngrok-skip-browser-warning": "true",
-                    },
-                    body: JSON.stringify({
-                        full_name:name,
-                        email,
-                        password,
-                    }),
-                }
-            );
-            
+            const response = await fetch('/user.json');
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error.message || "Signup failed")
-            }
-            
-            const user = {email: data.user.email, name: data.user.full_name, dueDate: data.user.date_joined}
+            const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+            const allUsers = [...data.users, ...storedUsers];
 
-            login(data.access, data.refresh, user);
+            const existingUser = allUsers.find((u: any) => u.email === email);
+            if (existingUser) {
+                throw new Error("Email already exists");
+            }
+
+            const newUser = {
+                id: Math.max(...allUsers.map((u: any) => u.id), 0) + 1,
+                name,
+                email,
+                password,
+                date_joined: new Date().toISOString().split('T')[0]
+            };
+
+            storedUsers.push(newUser);
+            localStorage.setItem('users', JSON.stringify(storedUsers));
+
+            const user = {email: newUser.email, name: newUser.name, dueDate: newUser.date_joined}
+            login("token_" + newUser.id, "refresh_" + newUser.id, user);
 
             navigate("/", { replace: true });
         }
