@@ -42,7 +42,7 @@ export default function Default() {
                                 <div className="pt-6">
                                     <Header />
                                 </div>
-                                <div className="px-4 py-8">
+                                <div className="px-4 py-8 pb-32">
                                     <Outlet />
                                 </div>
                                 <div className="pb-6">
