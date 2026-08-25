@@ -50,10 +50,17 @@ export default function PaymentSuccess({
 
     useEffect(() => {
         if (status === "success" && onClose) {
-            const timer = setTimeout(onClose, 5000);
+            const timer = setTimeout(onClose, 7000);
             return () => clearTimeout(timer);
         }
     }, [status, onClose]);
+
+    useEffect(() => {
+        if (open && onClose) {
+            const timer = setTimeout(onClose, 7000);
+            return () => clearTimeout(timer);
+        }
+    }, [open, onClose]);
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
@@ -126,6 +133,15 @@ export default function PaymentSuccess({
                         transition={{ type: "spring", stiffness: 180, damping: 15 }}
                         className="relative w-80 mx-auto rounded-3xl bg-white px-8 py-12 shadow-2xl"
                     >
+                        {onClose && (
+                            <button
+                                onClick={onClose}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                                aria-label="Close"
+                            >
+                                <X size={24} />
+                            </button>
+                        )}
                         <div className="flex flex-col items-center text-center">
                             <BadgeCheck
                                 size={50}
