@@ -1,0 +1,63 @@
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import Login from "../components/(auth)/Login";
+import Signup from "../components/(auth)/Signup";
+import Home from "../components/Home";
+import Transactions from "../components/Transactions";
+import Contact from "../components/Contact";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { useAuthStore } from "../store/authStore";
+
+export default function Default() {
+    const accessToken = useAuthStore((state) => state.accessToken)
+
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route
+                    path="/login"
+                    element={
+                        accessToken ? (
+                            <Navigate to="/" />
+                        ) : (
+                            <Login />
+                        )
+                    }
+                />
+                <Route
+                    path="/signup"
+                    element={
+                        accessToken ? (
+                            <Navigate to="/" />
+                        ) : (
+                            <Signup />
+                        )
+                    }
+                />
+
+                <Route
+                    element={
+                        accessToken ? (
+                            <div className="min-h-screen overflow-y-auto bg-[#88afed19] pb-24">
+                                <Header />
+                                <Outlet />
+                                <Footer />
+                            </div>
+                        ) : (
+                            <Navigate to="/login" />
+                        )
+                    }
+                >
+                    <Route path="/" element={<Home />} />
+                    <Route path="/transactions" element={<Transactions />} />
+                    <Route path="/contact" element={<Contact />} />
+                </Route>
+
+                <Route
+                    path="*"
+                    element={<Navigate to={accessToken ? "/" : "/login"} />}
+                />
+            </Routes>
+        </BrowserRouter>
+    );
+}
