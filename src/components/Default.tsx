@@ -42,8 +42,10 @@ export default function Default() {
                                 <div className="pt-6">
                                     <Header />
                                 </div>
-                                <div className="px-4 py-8 pb-32">
-                                    <Outlet />
+                                <div className="py-8 pb-32 flex justify-center">
+                                    <div className="w-full max-w-2xl px-4">
+                                        <Outlet />
+                                    </div>
                                 </div>
                                 <div className="pb-6">
                                     <Footer />
