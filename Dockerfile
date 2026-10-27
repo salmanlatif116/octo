@@ -1,45 +1,33 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
+# ---- Stage 1: build the Next.js frontend into static files (frontend/out) ----
+FROM node:22-alpine AS frontend
+WORKDIR /frontend
+COPY frontend/package*.json ./
 RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Build application
+COPY frontend/ ./
+# Empty = the browser calls the API on the same origin it loaded the page from.
+ENV NEXT_PUBLIC_API_BASE_URL=""
 RUN npm run build
 
-# Runtime stage
-FROM nginx:alpine
+# ---- Stage 2: FastAPI serves the API *and* the built frontend ----
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    STATIC_DIR=/app/static \
+    DATA_DIR=/data
+WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy nginx configuration - use a simpler approach
-RUN rm /etc/nginx/conf.d/default.conf
+COPY backend/app ./app
+COPY --from=frontend /frontend/out ./static
 
-COPY --chown=nginx:nginx default.conf /etc/nginx/conf.d/default.conf
+# SQLite database + uploaded screenshots live here; mount a volume to keep them.
+RUN mkdir -p /data
+VOLUME /data
 
-# Copy built application from builder
-COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')" || exit 1
 
-# Ensure proper permissions
-RUN chmod -R 755 /usr/share/nginx/html && \
-    chmod -R 755 /var/cache/nginx && \
-    chmod -R 755 /var/log/nginx
-
-# Expose port
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/ || exit 1
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,28 +1,48 @@
-version: '3.8'
-
 services:
-  octo-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: octo-app
-    ports:
-      - "${APP_PORT:-3000}:3000"
+  # PostgreSQL: the database. Its files live in the `octo-pgdata` volume.
+  db:
+    image: postgres:16-alpine
+    container_name: octo-db
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
-    restart: unless-stopped
-    networks:
-      - octo-network
+      POSTGRES_USER: octo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-octo-dev-password}
+      POSTGRES_DB: octo
+    volumes:
+      - octo-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/index.html"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    labels:
-      - "com.example.description=Octo React Application"
-      - "com.example.version=${APP_VERSION:-1.0.0}"
+      test: ["CMD-SHELL", "pg_isready -U octo -d octo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
-networks:
-  octo-network:
-    driver: bridge
+  # FastAPI backend + the built frontend, on one port.
+  octo:
+    build: .
+    container_name: octo
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://octo:${POSTGRES_PASSWORD:-octo-dev-password}@db:5432/octo
+      # Signs login tokens. Set a long random value in .env for anything beyond local testing.
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me-please-use-a-long-random-value}
+      ADMIN_USER_ID: ${ADMIN_USER_ID:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      DEFAULT_MONTHLY_AMOUNT: ${DEFAULT_MONTHLY_AMOUNT:-4500}
+      # true = create demo customers on the first start (set false for a real deployment).
+      SEED_DEMO: ${SEED_DEMO:-true}
+      ENABLE_DOCS: ${ENABLE_DOCS:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Karachi}
+    volumes:
+      # Uploaded receipts and log files (app.log, error.log).
+      - octo-data:/data
+    restart: unless-stopped
+
+volumes:
+  octo-pgdata:
+  octo-data:
